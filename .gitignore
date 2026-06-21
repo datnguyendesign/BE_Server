@@ -1,0 +1,98 @@
+# =====================
+# OS / Mac
+# =====================
+.DS_Store
+**/.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+
+# =====================
+# IntelliJ IDEA
+# =====================
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+.idea_modules/
+
+# IntelliJ / JetBrains caches
+**/.idea/**/workspace.xml
+**/.idea/**/tasks.xml
+**/.idea/**/usage.statistics.xml
+**/.idea/**/shelf/
+**/.idea/**/dataSources/
+**/.idea/**/dataSources.local.xml
+
+# =====================
+# Java / Maven / Spring Boot
+# =====================
+target/
+**/target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# Maven wrapper (optional, but keep jar tracked)
+.mvn/wrapper/maven-wrapper.properties
+!.mvn/wrapper/maven-wrapper.properties
+
+# Logs
+*.log
+logs/
+**/logs/
+
+# =====================
+# Eclipse / STS
+# =====================
+.classpath
+.project
+.settings/
+.apt_generated/
+.factorypath
+.springBeans
+.sts4-cache/
+
+# =====================
+# NetBeans
+# =====================
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# =====================
+# Gradle (nếu có)
+# =====================
+build/
+.gradle/
+**/build/
+
+# =====================
+# Node
+# =====================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+coverage/
+.next/
+.cache/
+
+# =====================
+# VS Code
+# =====================
+.vscode/
+
+# =====================
+# Env / Secrets
+# =====================
+.env
+.env.*
+
+docker-compose.override.yml

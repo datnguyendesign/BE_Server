@@ -1,0 +1,64 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: dacn2_redis
+    ports:
+      - "6379:6379"
+    command: [ "redis-server", "--appendonly", "yes" ]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  backend:
+    build: .
+    container_name: dacn2_backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      # Server
+      PORT: "8080"
+
+      # MongoDB Atlas (bắt buộc)
+      MONGODB_URI: "${MONGODB_URI}"
+
+      # JWT (bắt buộc)
+      JWT_SECRET: "${JWT_SECRET}"
+
+      # Google OAuth2 (file config đang require -> set tạm nếu chưa dùng)
+      GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID:-dummy}"
+      GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET:-dummy}"
+
+      # AI server
+      AI_BASE_URL: "${AI_BASE_URL}"
+      AI_INTERNAL_TOKEN: "${AI_INTERNAL_TOKEN}"
+
+      # Redis (trỏ sang service redis)
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: "${REDIS_PASSWORD:-}"
+      REDIS_DB: "${REDIS_DB:-0}"
+
+      # AWS / S3 (file config đang require -> phải set giá trị)
+      AWS_REGION: "${AWS_REGION:-ap-southeast-1}"
+      AWS_CREDENTIALS_ACCESS_KEY: "${AWS_CREDENTIALS_ACCESS_KEY:-dummy}"
+      AWS_CREDENTIALS_SECRET_KEY: "${AWS_CREDENTIALS_SECRET_KEY:-dummy}"
+      AWS_S3_NUTRITION_BUCKET: "${AWS_S3_NUTRITION_BUCKET:-dummy-bucket}"
+      AWS_S3_NUTRITION_PREFIX: "${AWS_S3_NUTRITION_PREFIX:-nutrition/}"
+      AWS_S3_PRESIGN_PUT_TTL_SECONDS: "${AWS_S3_PRESIGN_PUT_TTL_SECONDS:-300}"
+      AWS_S3_PRESIGN_GET_TTL_SECONDS: "${AWS_S3_PRESIGN_GET_TTL_SECONDS:-600}"
+      AWS_S3_NUTRITION_MAX_BYTES: "${AWS_S3_NUTRITION_MAX_BYTES:-5242880}"
+      AWS_S3_CHAT_BUCKET: "${AWS_S3_CHAT_BUCKET:-dummy-bucket}"
+      AWS_S3_CHAT_PREFIX: "${AWS_S3_CHAT_PREFIX:-chat/}"
+      AWS_S3_CHAT_PRESIGN_PUT_TTL_SECONDS: "${AWS_S3_CHAT_PRESIGN_PUT_TTL_SECONDS:-300}"
+      AWS_S3_CHAT_PRESIGN_GET_TTL_SECONDS: "${AWS_S3_CHAT_PRESIGN_GET_TTL_SECONDS:-600}"
+      AWS_S3_CHAT_MAX_BYTES: "${AWS_S3_CHAT_MAX_BYTES:-5242880}"
+
+volumes:
+  redis_data:

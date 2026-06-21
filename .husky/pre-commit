@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+echo "🔍 Running BE pre-commit hook..."
+
+# Chạy test Maven
+./mvnw test
+
+status=$?
+
+if [ $status -ne 0 ]; then
+  echo "❌ Maven tests failed. Commit aborted."
+  exit 1
+fi
+
+echo "✅ Pre-commit hook passed. Proceeding with commit."
