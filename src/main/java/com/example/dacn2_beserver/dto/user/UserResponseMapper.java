@@ -5,6 +5,8 @@ import com.example.dacn2_beserver.model.user.User;
 import com.example.dacn2_beserver.model.user.UserGoals;
 import com.example.dacn2_beserver.model.user.UserProfile;
 import com.example.dacn2_beserver.model.user.UserSettings;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /** Ánh xạ thuần User -> UserResponse, dùng chung cho /auth/me và /users/me/*. */
 public final class UserResponseMapper {
@@ -36,9 +38,19 @@ public final class UserResponseMapper {
                 .fullName(p.getFullName())
                 .avatarUrl(p.getAvatarUrl())
                 .gender(p.getGender() == null ? null : p.getGender().name())
+                .birthDate(formatBirthDate(p.getBirthday()))
                 .heightCm(p.getHeightCm())
                 .weightKg(p.getWeightKg())
+                .bloodType(p.getBloodType())
+                .conditions(p.getConditions())
                 .build();
+    }
+
+    private static String formatBirthDate(Date birthday) {
+        if (birthday == null) {
+            return null;
+        }
+        return new SimpleDateFormat("yyyy-MM-dd").format(birthday);
     }
 
     private static UserSettingsDto mapSettings(UserSettings s) {

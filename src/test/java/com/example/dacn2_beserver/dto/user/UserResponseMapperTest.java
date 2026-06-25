@@ -95,4 +95,36 @@ class UserResponseMapperTest {
         assertThat(r.getSettings()).isNotNull();
         assertThat(r.getSettings().getNotifications()).isNull();
     }
+
+    @Test
+    void mapsBirthDateBloodTypeAndConditions() throws Exception {
+        java.util.Date dob = new java.text.SimpleDateFormat("yyyy-MM-dd").parse("2000-01-15");
+        User u = User.builder().id("u5").username("dob")
+                .profile(UserProfile.builder()
+                        .fullName("Has DOB")
+                        .birthday(dob)
+                        .bloodType("O+")
+                        .conditions(java.util.List.of("asthma", "penicillin allergy"))
+                        .build())
+                .build();
+
+        UserResponse r = UserResponseMapper.toResponse(u);
+
+        assertThat(r.getProfile().getBirthDate()).isEqualTo("2000-01-15");
+        assertThat(r.getProfile().getBloodType()).isEqualTo("O+");
+        assertThat(r.getProfile().getConditions()).containsExactly("asthma", "penicillin allergy");
+    }
+
+    @Test
+    void nullBirthdayMapsToNullBirthDate() {
+        User u = User.builder().id("u6").username("nodob")
+                .profile(UserProfile.builder().fullName("No DOB").build())
+                .build();
+
+        UserResponse r = UserResponseMapper.toResponse(u);
+
+        assertThat(r.getProfile().getBirthDate()).isNull();
+        assertThat(r.getProfile().getBloodType()).isNull();
+        assertThat(r.getProfile().getConditions()).isNull();
+    }
 }
