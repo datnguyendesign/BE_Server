@@ -28,6 +28,10 @@ public class CalendarDaySummaryResponse {
     private int lightMinutes;
     private int awakeMinutes;
 
+    private int avgHeartRate;
+    private int maxHeartRate;
+    private int minHeartRate;
+
     private List<String> highlights;
     private String summary;
 

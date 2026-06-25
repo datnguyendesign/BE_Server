@@ -41,6 +41,9 @@ public class SummaryService {
                 .awakeMinutes(nvl(agg.getAwakeMinutes()))
                 .caloriesIn(nvl(agg.getCaloriesIn()))
                 .caloriesOut(nvl(agg.getCaloriesOut()))
+                .avgHeartRate(nvl(agg.getAvgHeartRate()))
+                .maxHeartRate(nvl(agg.getMaxHeartRate()))
+                .minHeartRate(nvl(agg.getMinHeartRate()))
                 .highlights(agg.getHighlights() != null ? agg.getHighlights() : java.util.List.of())
                 .summary(agg.getSummary())
                 .build();
