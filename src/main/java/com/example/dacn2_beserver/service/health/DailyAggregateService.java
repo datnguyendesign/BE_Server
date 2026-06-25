@@ -53,6 +53,7 @@ public class DailyAggregateService {
 
         // Day window [startOfDay, startOfNextDay) in the user's timezone, as instants.
         Instant from = date.atStartOfDay(zoneId).toInstant();
+        // Window [startOfDay, startOfNextDay]. Spring Data Between is inclusive-upper; a reading at exactly next-midnight is rare and tolerated for MVP.
         Instant to = date.plusDays(1).atStartOfDay(zoneId).toInstant();
 
         List<HealthEventRaw> readings = healthEventRawRepository

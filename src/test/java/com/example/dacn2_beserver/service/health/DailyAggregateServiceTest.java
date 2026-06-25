@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.mockito.ArgumentCaptor;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -85,6 +87,26 @@ class DailyAggregateServiceTest {
         assertThat(agg.getAvgHeartRate()).isEqualTo(80);
         assertThat(agg.getMaxHeartRate()).isEqualTo(100);
         assertThat(agg.getMinHeartRate()).isEqualTo(60);
+    }
+
+    @Test
+    void dayWindowBoundsAreStartOfDayInUserZone() {
+        Instant at = Instant.parse("2026-06-26T08:00:00Z");
+        when(userRepository.findById("u1")).thenReturn(Optional.of(utcUser()));
+        when(dailyAggregateRepository.findByUserIdAndDate(eq("u1"), any()))
+                .thenReturn(Optional.empty());
+        ArgumentCaptor<Instant> fromCap = ArgumentCaptor.forClass(Instant.class);
+        ArgumentCaptor<Instant> toCap = ArgumentCaptor.forClass(Instant.class);
+        when(healthEventRawRepository.findAllByUserIdAndTypeAndTimeStartAtBetween(
+                eq("u1"), eq(EventType.HEART_RATE), fromCap.capture(), toCap.capture()))
+                .thenReturn(List.of(reading(72, at)));
+        when(dailyAggregateRepository.save(any(DailyAggregate.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        service.addHeartRate("u1", at, 72);
+
+        assertThat(fromCap.getValue()).isEqualTo(Instant.parse("2026-06-26T00:00:00Z"));
+        assertThat(toCap.getValue()).isEqualTo(Instant.parse("2026-06-27T00:00:00Z"));
     }
 
     @Test
