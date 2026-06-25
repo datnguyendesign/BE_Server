@@ -59,7 +59,9 @@ public class HeartRateService {
         if (event.getPayload() != null && event.getPayload().get("bpm") instanceof Number n) {
             bpm = n.intValue();
         }
-        Instant measuredAt = event.getTime() != null ? event.getTime().getStartAt() : event.getCreatedAt();
+        Instant measuredAt = (event.getTime() != null && event.getTime().getStartAt() != null)
+                ? event.getTime().getStartAt()
+                : event.getCreatedAt();
         return HeartRateReadingResponse.builder()
                 .id(event.getId())
                 .bpm(bpm)

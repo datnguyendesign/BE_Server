@@ -71,6 +71,7 @@ class HeartRateServiceTest {
         HeartRateReadingResponse res = service.create("u1", req);
 
         assertThat(res.getMeasuredAt()).isNotNull();
+        assertThat(res.getMeasuredAt().getNano()).isZero();
         assertThat(res.getBpm()).isEqualTo(66);
     }
 
