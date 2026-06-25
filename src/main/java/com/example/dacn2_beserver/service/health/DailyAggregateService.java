@@ -1,8 +1,11 @@
 package com.example.dacn2_beserver.service.health;
 
+import com.example.dacn2_beserver.model.enums.EventType;
 import com.example.dacn2_beserver.model.health.DailyAggregate;
+import com.example.dacn2_beserver.model.health.HealthEventRaw;
 import com.example.dacn2_beserver.model.user.User;
 import com.example.dacn2_beserver.repository.DailyAggregateRepository;
+import com.example.dacn2_beserver.repository.HealthEventRawRepository;
 import com.example.dacn2_beserver.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -39,7 +42,56 @@ public class DailyAggregateService {
     private static final int DEFAULT_CALORIES_OUT_GOAL = 500;
     private final DailyAggregateRepository dailyAggregateRepository;
     private final UserRepository userRepository;
+    private final HealthEventRawRepository healthEventRawRepository;
 
+
+    public DailyAggregate addHeartRate(String userId, Instant measuredAt, int bpm) {
+        User user = requireUser(userId);
+        ZoneId zoneId = userZone(user);
+
+        LocalDate date = LocalDateTime.ofInstant(measuredAt, zoneId).toLocalDate();
+
+        // Day window [startOfDay, startOfNextDay) in the user's timezone, as instants.
+        Instant from = date.atStartOfDay(zoneId).toInstant();
+        Instant to = date.plusDays(1).atStartOfDay(zoneId).toInstant();
+
+        List<HealthEventRaw> readings = healthEventRawRepository
+                .findAllByUserIdAndTypeAndTimeStartAtBetween(userId, EventType.HEART_RATE, from, to);
+
+        List<Integer> bpms = new ArrayList<>();
+        for (HealthEventRaw r : readings) {
+            Integer v = extractBpm(r);
+            if (v != null) {
+                bpms.add(v);
+            }
+        }
+
+        DailyAggregate agg = findOrCreate(userId, date);
+        if (!bpms.isEmpty()) {
+            int sum = 0, max = Integer.MIN_VALUE, min = Integer.MAX_VALUE;
+            for (int v : bpms) {
+                sum += v;
+                if (v > max) max = v;
+                if (v < min) min = v;
+            }
+            agg.setAvgHeartRate((int) Math.round((double) sum / bpms.size()));
+            agg.setMaxHeartRate(max);
+            agg.setMinHeartRate(min);
+        }
+        touch(agg);
+        return dailyAggregateRepository.save(agg);
+    }
+
+    private Integer extractBpm(HealthEventRaw r) {
+        if (r.getPayload() == null) {
+            return null;
+        }
+        Object v = r.getPayload().get("bpm");
+        if (v instanceof Number n) {
+            return n.intValue();
+        }
+        return null;
+    }
 
     public DailyAggregate addWater(String userId, Instant loggedAt, int deltaMl) {
         User user = requireUser(userId);
