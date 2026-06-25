@@ -4,6 +4,7 @@ import com.example.dacn2_beserver.dto.common.ApiResponse;
 import com.example.dacn2_beserver.dto.health.*;
 import com.example.dacn2_beserver.security.AuthPrincipal;
 import com.example.dacn2_beserver.service.health.CalendarService;
+import com.example.dacn2_beserver.service.health.HeartRateService;
 import com.example.dacn2_beserver.service.health.SleepService;
 import com.example.dacn2_beserver.service.health.SummaryService;
 import com.example.dacn2_beserver.service.health.WaterService;
@@ -26,6 +27,7 @@ public class HealthController {
     private final SummaryService summaryService;
     private final SleepService sleepService;
     private final CalendarService calendarService;
+    private final HeartRateService heartRateService;
 
     // -------- WATER --------
 
@@ -82,6 +84,25 @@ public class HealthController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {
         return ApiResponse.ok(summaryService.getRange(principal.userId(), from, to));
+    }
+
+    // -------- HEART RATE --------
+
+    @PostMapping("/heart-rate")
+    public ApiResponse<HeartRateReadingResponse> createHeartRate(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @Valid @RequestBody CreateHeartRateRequest req
+    ) {
+        return ApiResponse.ok(heartRateService.create(principal.userId(), req));
+    }
+
+    @GetMapping("/heart-rate")
+    public ApiResponse<List<HeartRateReadingResponse>> listHeartRate(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @RequestParam Instant from,
+            @RequestParam Instant to
+    ) {
+        return ApiResponse.ok(heartRateService.listResponses(principal.userId(), from, to));
     }
 
     // -------- CALENDAR (single-day for calendar click) --------
