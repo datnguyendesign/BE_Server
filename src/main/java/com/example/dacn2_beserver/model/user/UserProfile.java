@@ -18,4 +18,6 @@ public class UserProfile {
     private Date birthday;      // optional
     private Double heightCm;    // optional
     private Double weightKg;    // optional
+    private String bloodType;          // optional
+    private java.util.List<String> conditions;  // optional
 }

@@ -12,7 +12,9 @@ public class UserProfileDto {
     private String avatarUrl;
 
     private String gender;
-    private Integer birthday;
+    private String birthDate;          // yyyy-MM-dd
     private Double heightCm;
     private Double weightKg;
+    private String bloodType;
+    private java.util.List<String> conditions;
 }

@@ -26,4 +26,6 @@ public class UpdateProfileRequest {
     private Double heightCm;
     @PositiveOrZero
     private Double weightKg;
+    private String bloodType;
+    private java.util.List<String> conditions;
 }
