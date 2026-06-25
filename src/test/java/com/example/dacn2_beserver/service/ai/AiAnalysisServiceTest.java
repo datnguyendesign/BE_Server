@@ -119,5 +119,23 @@ class AiAnalysisServiceTest {
         DailyAnalysisResponse res = service.analyzeDaily("u1", new DailyAnalysisRequest("2026-06-25", null));
         assertThat(res.getTargetUsers()).isNotEmpty();
         assertThat(res.getDisclaimer()).isNotBlank();
+        assertThat(res.getTargetUsers()).contains("Người bận rộn muốn theo dõi sức khỏe hằng ngày trong một app.");
+        assertThat(res.getMissingForHealthApp()).contains("Phân quyền dữ liệu y tế, chính sách bảo mật và cảnh báo cấp cứu rõ ràng.");
+        assertThat(res.getOptimizations()).contains("Thu thập feedback sau trải nghiệm để cải thiện model và UI.");
+        assertThat(res.getDisclaimer()).isEqualTo("Thông tin AI chỉ để tham khảo sức khỏe tổng quát, không thay thế chẩn đoán hoặc điều trị y tế.");
+    }
+
+    @Test
+    void partialMetricFromAggregateScoresBelowCap() {
+        when(userRepository.findById("u1")).thenReturn(Optional.of(userWithGoals(8000)));
+        DailyAggregate agg = DailyAggregate.builder()
+                .userId("u1").date(LocalDate.parse("2026-06-25")).steps(4000).build();
+        when(dailyAggregateRepository.findByUserIdAndDate("u1", LocalDate.parse("2026-06-25")))
+                .thenReturn(Optional.of(agg));
+
+        DailyAnalysisResponse res = service.analyzeDaily("u1", new DailyAnalysisRequest("2026-06-25", null));
+
+        // base 60 + round(0.5*15)=8, other metrics absent => 68
+        assertThat(res.getReadinessScore()).isEqualTo(68);
     }
 }

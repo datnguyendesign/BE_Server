@@ -138,6 +138,7 @@ public class AiAnalysisService {
         }
         Double[] acc = new Double[4]; // steps, water, sleepHours, caloriesOut
         walk(map, acc);
+        // DailyMetrics order is (steps, waterMl, caloriesOut, sleepHours) — acc[3]=calories, acc[2]=sleep
         return new ReadinessScorer.DailyMetrics(acc[0], acc[1], acc[3], acc[2]);
     }
 
