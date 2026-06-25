@@ -13,4 +13,12 @@ public interface HealthEventRawRepository extends MongoRepository<HealthEventRaw
     );
 
     List<HealthEventRaw> findAllByUserIdAndCreatedAtBetween(String userId, Instant from, Instant to);
+
+    List<HealthEventRaw> findAllByUserIdAndTypeAndTimeStartAtBetween(
+            String userId, EventType type, Instant from, Instant to
+    );
+
+    List<HealthEventRaw> findAllByUserIdAndTypeAndTimeStartAtBetweenOrderByTimeStartAtDesc(
+            String userId, EventType type, Instant from, Instant to
+    );
 }
