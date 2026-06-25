@@ -27,14 +27,17 @@ public class UserService {
         UserProfile p = u.getProfile() == null ? UserProfile.builder().build() : u.getProfile();
 
         // AboutYou: gender/birthDate/height/weight
-        if (req.getGender() != null) {
-            p.setGender(Gender.valueOf(req.getGender().toUpperCase()));
+        Gender parsedGender = parseGender(req.getGender());
+        if (parsedGender != null) {
+            p.setGender(parsedGender);
         }
         if (req.getBirthDate() != null) {
             p.setBirthday(req.getBirthDate());
         }
         if (req.getHeightCm() != null) p.setHeightCm(req.getHeightCm());
         if (req.getWeightKg() != null) p.setWeightKg(req.getWeightKg());
+        if (req.getBloodType() != null) p.setBloodType(req.getBloodType());
+        if (req.getConditions() != null) p.setConditions(req.getConditions());
 
         // (optional) fullName/avatarUrl nếu FE cho chỉnh
         if (req.getFullName() != null) p.setFullName(req.getFullName());
@@ -45,6 +48,17 @@ public class UserService {
         u = userRepository.save(u);
 
         return UserResponseMapper.toResponse(u);
+    }
+
+    private Gender parseGender(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            return Gender.valueOf(raw.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
     }
 
     public UserResponse updateNotificationEnabled(String userId, boolean enabled) {
