@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Chấm điểm sẵn sàng (readiness) thuần: so chỉ số trong ngày với mục tiêu cá nhân.
@@ -11,6 +12,8 @@ import java.util.List;
  */
 @Component
 public class ReadinessScorer {
+
+    private static final Locale VI = Locale.GERMANY;
 
     private static final int BASE = 60;
     private static final int MAX_STEPS = 15;
@@ -76,16 +79,16 @@ public class ReadinessScorer {
     private String buildSummary(String date, int score, DailyMetrics m) {
         List<String> parts = new ArrayList<>();
         if (m.steps() != null) {
-            parts.add(String.format("%,d bước", m.steps().intValue()));
+            parts.add(String.format(VI, "%,d bước", m.steps().intValue()));
         }
         if (m.waterMl() != null) {
-            parts.add(String.format("%,dml nước", m.waterMl().intValue()));
+            parts.add(String.format(VI, "%,dml nước", m.waterMl().intValue()));
         }
         if (m.sleepHours() != null) {
-            parts.add(String.format("%.1f giờ ngủ", m.sleepHours()));
+            parts.add(String.format(VI, "%.1f giờ ngủ", m.sleepHours()));
         }
         if (m.caloriesOut() != null) {
-            parts.add(String.format("%,d kcal tiêu hao", m.caloriesOut().intValue()));
+            parts.add(String.format(VI, "%,d kcal tiêu hao", m.caloriesOut().intValue()));
         }
         return "Phân tích ngày " + date + ": chỉ số sẵn sàng " + score + "/100 dựa trên "
                 + String.join(", ", parts) + " so với mục tiêu cá nhân của bạn.";
@@ -96,10 +99,10 @@ public class ReadinessScorer {
 
         if (m.steps() != null && m.steps() < g.steps()) {
             int remaining = (int) Math.round(g.steps() - m.steps());
-            plan.add(String.format("Còn %,d bước nữa để đạt mục tiêu %,d bước của bạn — "
+            plan.add(String.format(VI, "Còn %,d bước nữa để đạt mục tiêu %,d bước của bạn — "
                     + "thử đi bộ 10-15 phút sau bữa ăn.", remaining, g.steps()));
         } else if (m.steps() != null) {
-            plan.add(String.format("Bạn đã đạt mục tiêu %,d bước hôm nay 👏 Duy trì vận động đều đặn.",
+            plan.add(String.format(VI, "Bạn đã đạt mục tiêu %,d bước hôm nay 👏 Duy trì vận động đều đặn.",
                     g.steps()));
         } else {
             plan.add("Duy trì vận động đều và xen kẽ nghỉ ngơi hợp lý.");
@@ -107,7 +110,7 @@ public class ReadinessScorer {
 
         if (m.waterMl() != null && m.waterMl() < g.waterMl()) {
             int remaining = (int) Math.round(g.waterMl() - m.waterMl());
-            plan.add(String.format("Còn khoảng %,dml nữa để đạt mục tiêu %,dml — "
+            plan.add(String.format(VI, "Còn khoảng %,dml nữa để đạt mục tiêu %,dml — "
                     + "uống rải đều theo từng khung giờ.", remaining, g.waterMl()));
         } else if (m.waterMl() != null) {
             plan.add("Bạn đã đủ nước hôm nay. Tiếp tục uống rải đều trong ngày.");
