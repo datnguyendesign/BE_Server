@@ -48,7 +48,7 @@ public class AiAnalysisService {
         ReadinessScorer.Goals goals = resolveGoals(user.getGoals());
         ReadinessScorer.DailyMetrics metrics = resolveMetrics(userId, date, req.getSummary());
 
-        String dateLabel = req.getDate() != null && !req.getDate().isBlank() ? req.getDate() : date.toString();
+        String dateLabel = parsableDate(req.getDate()) ? req.getDate().trim() : date.toString();
         ReadinessScorer.ScoreResult result = readinessScorer.score(metrics, goals, dateLabel);
 
         return DailyAnalysisResponse.builder()
@@ -82,6 +82,18 @@ public class AiAnalysisService {
     }
 
     // ---------- helpers ----------
+
+    private boolean parsableDate(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return false;
+        }
+        try {
+            LocalDate.parse(raw.trim());
+            return true;
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
 
     private LocalDate resolveDate(String raw, User user) {
         if (raw != null && !raw.isBlank()) {

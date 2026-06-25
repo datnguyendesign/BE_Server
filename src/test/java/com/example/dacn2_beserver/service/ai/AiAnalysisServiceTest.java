@@ -21,6 +21,9 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -123,6 +126,17 @@ class AiAnalysisServiceTest {
         assertThat(res.getMissingForHealthApp()).contains("Phân quyền dữ liệu y tế, chính sách bảo mật và cảnh báo cấp cứu rõ ràng.");
         assertThat(res.getOptimizations()).contains("Thu thập feedback sau trải nghiệm để cải thiện model và UI.");
         assertThat(res.getDisclaimer()).isEqualTo("Thông tin AI chỉ để tham khảo sức khỏe tổng quát, không thay thế chẩn đoán hoặc điều trị y tế.");
+    }
+
+    @Test
+    void unparseableDateDoesNotLeakIntoSummary() {
+        when(userRepository.findById("u1")).thenReturn(Optional.of(userWithGoals(8000)));
+        lenient().when(dailyAggregateRepository.findByUserIdAndDate(eq("u1"), any()))
+                .thenReturn(Optional.empty());
+
+        DailyAnalysisResponse res = service.analyzeDaily("u1", new DailyAnalysisRequest("garbage-not-a-date", null));
+
+        assertThat(res.getSummary()).doesNotContain("garbage-not-a-date");
     }
 
     @Test
