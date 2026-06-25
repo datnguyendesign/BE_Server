@@ -50,7 +50,9 @@ public final class UserResponseMapper {
         if (birthday == null) {
             return null;
         }
-        return new SimpleDateFormat("yyyy-MM-dd").format(birthday);
+        SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd");
+        fmt.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+        return fmt.format(birthday);
     }
 
     private static UserSettingsDto mapSettings(UserSettings s) {

@@ -98,7 +98,9 @@ class UserResponseMapperTest {
 
     @Test
     void mapsBirthDateBloodTypeAndConditions() throws Exception {
-        java.util.Date dob = new java.text.SimpleDateFormat("yyyy-MM-dd").parse("2000-01-15");
+        java.text.SimpleDateFormat dobParser = new java.text.SimpleDateFormat("yyyy-MM-dd");
+        dobParser.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+        java.util.Date dob = dobParser.parse("2000-01-15");
         User u = User.builder().id("u5").username("dob")
                 .profile(UserProfile.builder()
                         .fullName("Has DOB")
