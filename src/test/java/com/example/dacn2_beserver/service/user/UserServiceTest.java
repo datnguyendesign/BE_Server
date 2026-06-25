@@ -1,6 +1,7 @@
 package com.example.dacn2_beserver.service.user;
 
 import com.example.dacn2_beserver.dto.user.UserResponse;
+import com.example.dacn2_beserver.exception.UserNotFoundException;
 import com.example.dacn2_beserver.model.user.NotificationSettings;
 import com.example.dacn2_beserver.model.user.User;
 import com.example.dacn2_beserver.model.user.UserSettings;
@@ -82,7 +83,7 @@ class UserServiceTest {
     void unknownUserThrows() {
         when(userRepository.findById("ghost")).thenReturn(Optional.empty());
         assertThatThrownBy(() -> userService.updateNotificationEnabled("ghost", true))
-                .isInstanceOf(RuntimeException.class);
+                .isInstanceOf(UserNotFoundException.class);
     }
 
     @Test

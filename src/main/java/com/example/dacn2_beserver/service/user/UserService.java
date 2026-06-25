@@ -8,6 +8,7 @@ import com.example.dacn2_beserver.model.user.NotificationSettings;
 import com.example.dacn2_beserver.model.user.User;
 import com.example.dacn2_beserver.model.user.UserProfile;
 import com.example.dacn2_beserver.model.user.UserSettings;
+import com.example.dacn2_beserver.exception.UserNotFoundException;
 import com.example.dacn2_beserver.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -47,7 +48,7 @@ public class UserService {
     }
 
     public UserResponse updateNotificationEnabled(String userId, boolean enabled) {
-        User u = userRepository.findById(userId).orElseThrow();
+        User u = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
 
         UserSettings settings = u.getSettings() == null ? UserSettings.builder().build() : u.getSettings();
         NotificationSettings notifications = settings.getNotifications() == null
