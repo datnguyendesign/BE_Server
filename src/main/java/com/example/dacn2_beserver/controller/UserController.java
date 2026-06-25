@@ -1,5 +1,6 @@
 package com.example.dacn2_beserver.controller;
 
+import com.example.dacn2_beserver.dto.user.UpdateNotificationSettingsRequest;
 import com.example.dacn2_beserver.dto.user.UpdateProfileRequest;
 import com.example.dacn2_beserver.dto.user.UserResponse;
 import com.example.dacn2_beserver.security.AuthPrincipal;
@@ -7,6 +8,7 @@ import com.example.dacn2_beserver.service.user.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,5 +28,13 @@ public class UserController {
             @Valid @RequestBody UpdateProfileRequest req
     ) {
         return userService.updateProfile(principal.userId(), req);
+    }
+
+    @PatchMapping("/me/settings/notifications")
+    public UserResponse updateNotificationSettings(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @Valid @RequestBody UpdateNotificationSettingsRequest req
+    ) {
+        return userService.updateNotificationEnabled(principal.userId(), req.getEnabled());
     }
 }

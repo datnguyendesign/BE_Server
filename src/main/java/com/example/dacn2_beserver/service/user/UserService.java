@@ -1,11 +1,13 @@
 package com.example.dacn2_beserver.service.user;
 
 import com.example.dacn2_beserver.dto.user.UpdateProfileRequest;
-import com.example.dacn2_beserver.dto.user.UserProfileDto;
 import com.example.dacn2_beserver.dto.user.UserResponse;
+import com.example.dacn2_beserver.dto.user.UserResponseMapper;
 import com.example.dacn2_beserver.model.enums.Gender;
+import com.example.dacn2_beserver.model.user.NotificationSettings;
 import com.example.dacn2_beserver.model.user.User;
 import com.example.dacn2_beserver.model.user.UserProfile;
+import com.example.dacn2_beserver.model.user.UserSettings;
 import com.example.dacn2_beserver.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -41,31 +43,23 @@ public class UserService {
         u.setUpdatedAt(Instant.now());
         u = userRepository.save(u);
 
-        return toResponse(u);
+        return UserResponseMapper.toResponse(u);
     }
 
-    private UserResponse toResponse(User u) {
-        UserProfileDto profile = null;
-        if (u.getProfile() != null) {
-            profile = UserProfileDto.builder()
-                    .fullName(u.getProfile().getFullName())
-                    .avatarUrl(u.getProfile().getAvatarUrl())
-                    .gender(u.getProfile().getGender() == null ? null : u.getProfile().getGender().name())
-                    .heightCm(u.getProfile().getHeightCm())
-                    .weightKg(u.getProfile().getWeightKg())
-                    .build();
-        }
+    public UserResponse updateNotificationEnabled(String userId, boolean enabled) {
+        User u = userRepository.findById(userId).orElseThrow();
 
-        return UserResponse.builder()
-                .id(u.getId())
-                .username(u.getUsername())
-                .primaryEmail(u.getPrimaryEmail())
-                .profile(profile)
-                .status(u.getStatus())
-                .roles(u.getRoles())
-                .lastLoginAt(u.getLastLoginAt())
-                .createdAt(u.getCreatedAt())
-                .updatedAt(u.getUpdatedAt())
-                .build();
+        UserSettings settings = u.getSettings() == null ? UserSettings.builder().build() : u.getSettings();
+        NotificationSettings notifications = settings.getNotifications() == null
+                ? NotificationSettings.builder().build()
+                : settings.getNotifications();
+
+        notifications.setEnabled(enabled);
+        settings.setNotifications(notifications);
+        u.setSettings(settings);
+        u.setUpdatedAt(Instant.now());
+        u = userRepository.save(u);
+
+        return UserResponseMapper.toResponse(u);
     }
 }
