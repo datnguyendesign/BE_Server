@@ -2,6 +2,8 @@ package com.example.dacn2_beserver.service.ai;
 
 import org.springframework.stereotype.Component;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -13,7 +15,16 @@ import java.util.Locale;
 @Component
 public class ReadinessScorer {
 
-    private static final Locale VI = Locale.GERMANY;
+    private static final DecimalFormatSymbols DOT_SYMBOLS = buildDotSymbols();
+    private static final DecimalFormat INT_FMT = new DecimalFormat("#,##0", DOT_SYMBOLS);
+    private static final DecimalFormat ONE_DP_FMT = new DecimalFormat("0.0", DOT_SYMBOLS);
+
+    private static DecimalFormatSymbols buildDotSymbols() {
+        DecimalFormatSymbols s = new DecimalFormatSymbols(Locale.ROOT);
+        s.setGroupingSeparator('.');
+        s.setDecimalSeparator('.');
+        return s;
+    }
 
     private static final int BASE = 60;
     private static final int MAX_STEPS = 15;
@@ -79,16 +90,16 @@ public class ReadinessScorer {
     private String buildSummary(String date, int score, DailyMetrics m) {
         List<String> parts = new ArrayList<>();
         if (m.steps() != null) {
-            parts.add(String.format(VI, "%,d bước", m.steps().intValue()));
+            parts.add(INT_FMT.format(m.steps().intValue()) + " bước");
         }
         if (m.waterMl() != null) {
-            parts.add(String.format(VI, "%,dml nước", m.waterMl().intValue()));
+            parts.add(INT_FMT.format(m.waterMl().intValue()) + "ml nước");
         }
         if (m.sleepHours() != null) {
-            parts.add(String.format(VI, "%.1f giờ ngủ", m.sleepHours()));
+            parts.add(ONE_DP_FMT.format(m.sleepHours()) + " giờ ngủ");
         }
         if (m.caloriesOut() != null) {
-            parts.add(String.format(VI, "%,d kcal tiêu hao", m.caloriesOut().intValue()));
+            parts.add(INT_FMT.format(m.caloriesOut().intValue()) + " kcal tiêu hao");
         }
         return "Phân tích ngày " + date + ": chỉ số sẵn sàng " + score + "/100 dựa trên "
                 + String.join(", ", parts) + " so với mục tiêu cá nhân của bạn.";
@@ -99,19 +110,19 @@ public class ReadinessScorer {
 
         if (m.steps() != null && m.steps() < g.steps()) {
             int remaining = (int) Math.round(g.steps() - m.steps());
-            plan.add(String.format(VI, "Còn %,d bước nữa để đạt mục tiêu %,d bước của bạn — "
-                    + "thử đi bộ 10-15 phút sau bữa ăn.", remaining, g.steps()));
+            plan.add("Còn " + INT_FMT.format(remaining) + " bước nữa để đạt mục tiêu "
+                    + INT_FMT.format(g.steps()) + " bước của bạn — thử đi bộ 10-15 phút sau bữa ăn.");
         } else if (m.steps() != null) {
-            plan.add(String.format(VI, "Bạn đã đạt mục tiêu %,d bước hôm nay 👏 Duy trì vận động đều đặn.",
-                    g.steps()));
+            plan.add("Bạn đã đạt mục tiêu " + INT_FMT.format(g.steps())
+                    + " bước hôm nay 👏 Duy trì vận động đều đặn.");
         } else {
             plan.add("Duy trì vận động đều và xen kẽ nghỉ ngơi hợp lý.");
         }
 
         if (m.waterMl() != null && m.waterMl() < g.waterMl()) {
             int remaining = (int) Math.round(g.waterMl() - m.waterMl());
-            plan.add(String.format(VI, "Còn khoảng %,dml nữa để đạt mục tiêu %,dml — "
-                    + "uống rải đều theo từng khung giờ.", remaining, g.waterMl()));
+            plan.add("Còn khoảng " + INT_FMT.format(remaining) + "ml nữa để đạt mục tiêu "
+                    + INT_FMT.format(g.waterMl()) + "ml — uống rải đều theo từng khung giờ.");
         } else if (m.waterMl() != null) {
             plan.add("Bạn đã đủ nước hôm nay. Tiếp tục uống rải đều trong ngày.");
         } else {
