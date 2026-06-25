@@ -34,11 +34,25 @@ class UserResponseMapperTest {
         UserResponse r = UserResponseMapper.toResponse(u);
 
         assertThat(r.getId()).isEqualTo("u1");
+        assertThat(r.getUsername()).isEqualTo("dat");
+        assertThat(r.getPrimaryEmail()).isEqualTo("dat@example.com");
         assertThat(r.getProfile().getFullName()).isEqualTo("Dat Nguyen");
+        assertThat(r.getProfile().getAvatarUrl()).isEqualTo("https://a/x.png");
         assertThat(r.getProfile().getGender()).isEqualTo("MALE");
+        assertThat(r.getProfile().getHeightCm()).isEqualTo(175.0);
+        assertThat(r.getProfile().getWeightKg()).isEqualTo(68.0);
         assertThat(r.getSettings().getLanguage()).isEqualTo("vi");
+        assertThat(r.getSettings().getUnitSystem()).isEqualTo(UnitSystem.METRIC);
+        assertThat(r.getSettings().getTimezone()).isEqualTo("Asia/Ho_Chi_Minh");
         assertThat(r.getSettings().getNotifications().getEnabled()).isFalse();
+        assertThat(r.getSettings().getNotifications().getRemindDrinkWater()).isTrue();
+        assertThat(r.getSettings().getNotifications().getRemindSleep()).isTrue();
+        assertThat(r.getSettings().getNotifications().getRemindWorkout()).isFalse();
         assertThat(r.getGoals().getDailySteps()).isEqualTo(9000);
+        assertThat(r.getGoals().getDailyCaloriesIn()).isEqualTo(2000);
+        assertThat(r.getGoals().getDailyCaloriesOut()).isEqualTo(500);
+        assertThat(r.getGoals().getDailyWaterMl()).isEqualTo(2000);
+        assertThat(r.getGoals().getTargetWeightKg()).isEqualTo(65.0);
     }
 
     @Test
@@ -66,5 +80,19 @@ class UserResponseMapperTest {
 
         assertThat(r.getProfile().getGender()).isNull();
         assertThat(r.getProfile().getFullName()).isEqualTo("No Gender");
+    }
+
+    @Test
+    void nullNotificationsDoNotThrow() {
+        User u = User.builder().id("u4").username("z")
+                .settings(UserSettings.builder()
+                        .unitSystem(UnitSystem.METRIC).language("vi").timezone("Asia/Ho_Chi_Minh")
+                        .notifications(null).build())
+                .build();
+
+        UserResponse r = UserResponseMapper.toResponse(u);
+
+        assertThat(r.getSettings()).isNotNull();
+        assertThat(r.getSettings().getNotifications()).isNull();
     }
 }
