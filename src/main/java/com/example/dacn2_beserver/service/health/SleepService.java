@@ -23,6 +23,7 @@ public class SleepService {
 
     private final SleepSessionRepository sleepSessionRepository;
     private final DailyAggregateService dailyAggregateService;
+    private final SleepStageEstimator sleepStageEstimator;
 
     public SleepSessionResponse create(String userId, CreateSleepSessionRequest req) {
         // 1) Validate time range
@@ -31,15 +32,29 @@ public class SleepService {
         if (startAt == null || endAt == null || !endAt.isAfter(startAt)) {
             throw new IllegalArgumentException("Invalid sleep time range");
         }
+        if (endAt.isAfter(Instant.now())) {
+            throw new IllegalArgumentException("Sleep cannot end in the future");
+        }
 
         // 2) Compute total + stage minutes
         int totalMinutes = (int) Duration.between(startAt, endAt).toMinutes();
-        Map<SleepStage, Integer> stageMinutes = computeStageMinutes(req.getSegments());
 
-        int deep = stageMinutes.getOrDefault(SleepStage.DEEP, 0);
-        int rem = stageMinutes.getOrDefault(SleepStage.REM, 0);
-        int light = stageMinutes.getOrDefault(SleepStage.LIGHT, 0);
-        int awake = stageMinutes.getOrDefault(SleepStage.AWAKE, 0);
+        boolean hasRealSegments = req.getSegments() != null && !req.getSegments().isEmpty();
+        int deep, rem, light, awake;
+        if (hasRealSegments) {
+            Map<SleepStage, Integer> stageMinutes = computeStageMinutes(req.getSegments());
+            deep = stageMinutes.getOrDefault(SleepStage.DEEP, 0);
+            rem = stageMinutes.getOrDefault(SleepStage.REM, 0);
+            light = stageMinutes.getOrDefault(SleepStage.LIGHT, 0);
+            awake = stageMinutes.getOrDefault(SleepStage.AWAKE, 0);
+        } else {
+            SleepStageEstimator.Stages est = sleepStageEstimator.estimate(totalMinutes);
+            deep = est.deep();
+            rem = est.rem();
+            light = est.light();
+            awake = est.awake();
+        }
+        boolean replace = !hasRealSegments;
 
         // 3) Build entity
         SleepSession session = SleepSession.builder()
@@ -60,7 +75,7 @@ public class SleepService {
         session = sleepSessionRepository.save(session);
 
         // 4) Update summary by "wake-up day" (endAt)
-        dailyAggregateService.addSleep(userId, endAt, totalMinutes, deep, rem, light, awake);
+        dailyAggregateService.addSleep(userId, endAt, totalMinutes, deep, rem, light, awake, replace);
 
         return toResponse(session);
     }
