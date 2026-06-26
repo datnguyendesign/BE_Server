@@ -45,33 +45,57 @@ public class NutritionAnalyzeService {
                 ai.getPredictions() != null ? ai.getPredictions() : List.of();
 
         List<NutritionAnalyzeResponse.Candidate> candidates = new ArrayList<>();
+        AiFoodPredictResponse.Nutrition nutrition = ai.getNutrition();
+
         for (int i = 0; i < Math.min(3, preds.size()); i++) {
             AiFoodPredictResponse.FoodPrediction p = preds.get(i);
             String code = p != null ? p.getLabel() : null;
+            boolean isTop1 = (i == 0);
 
             NutritionAnalyzeResponse.Candidate c = NutritionAnalyzeResponse.Candidate.builder()
                     .code(code)
                     .score(p != null ? p.getScore() : null)
                     .build();
 
-            if (code != null && !code.isBlank()) {
-                FoodItem item = foodItemRepository.findByCode(code).orElse(null);
-                if (item != null) {
-                    c.setStatus(NutritionAnalyzeResponse.CandidateStatus.KNOWN);
-                    c.setFoodItem(NutritionAnalyzeResponse.FoodItemSnapshot.builder()
-                            .id(item.getId())
-                            .code(item.getCode())
-                            .name(item.getName())
-                            .calories(item.getCalories())
-                            .carbs(item.getCarbs())
-                            .fat(item.getFat())
-                            .protein(item.getProtein())
-                            .build());
-                } else {
-                    c.setStatus(NutritionAnalyzeResponse.CandidateStatus.UNKNOWN);
-                    c.setFoodItem(null);
+            FoodItem item = (code != null && !code.isBlank())
+                    ? foodItemRepository.findByCode(code).orElse(null)
+                    : null;
+
+            if (item != null) {
+                // KNOWN: catalog is the source of truth for calories/macros.
+                c.setStatus(NutritionAnalyzeResponse.CandidateStatus.KNOWN);
+                c.setFoodItem(NutritionAnalyzeResponse.FoodItemSnapshot.builder()
+                        .id(item.getId())
+                        .code(item.getCode())
+                        .name(item.getName())
+                        .calories(item.getCalories())
+                        .carbs(item.getCarbs())
+                        .fat(item.getFat())
+                        .protein(item.getProtein())
+                        .build());
+                c.setName(item.getName());
+                c.setCalories(item.getCalories());
+                c.setProtein(item.getProtein());
+                c.setCarbs(item.getCarbs());
+                c.setFat(item.getFat());
+                // Ollama supplements ingredients only (top-1 only).
+                if (isTop1 && nutrition != null) {
+                    c.setIngredients(nutrition.getIngredients());
                 }
+            } else if (isTop1 && nutrition != null) {
+                // UNKNOWN top-1: full Ollama estimate.
+                c.setStatus(NutritionAnalyzeResponse.CandidateStatus.UNKNOWN);
+                c.setFoodItem(null);
+                c.setName(nutrition.getDishName() != null ? nutrition.getDishName() : code);
+                c.setCalories(nutrition.getCalories());
+                c.setProtein(roundOrNull(nutrition.getProteinG()));
+                c.setCarbs(roundOrNull(nutrition.getCarbsG()));
+                c.setFat(roundOrNull(nutrition.getFatG()));
+                c.setServing(nutrition.getPortion());
+                c.setIngredients(nutrition.getIngredients());
+                c.setAiInsight(nutrition.getDisclaimer());
             } else {
+                // UNKNOWN rank 2-3 (or no nutrition): empty as before.
                 c.setStatus(NutritionAnalyzeResponse.CandidateStatus.UNKNOWN);
                 c.setFoodItem(null);
             }
@@ -99,5 +123,9 @@ public class NutritionAnalyzeService {
         }
 
         return res;
+    }
+
+    private static Integer roundOrNull(Double v) {
+        return v == null ? null : (int) Math.round(v);
     }
 }
