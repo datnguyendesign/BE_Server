@@ -4,6 +4,21 @@
 **Phạm vi:** Frontend (React Native) — gồm thêm native dependency + build lại app
 **Tính năng liên quan:** Đo nhịp tim. Spec 1 (đường lưu trữ) đã xong; Spec 2 thay nguồn BPM giả lập bằng đo PPG thật.
 
+## REVISION 2026-06-26 (sau khi triển khai Layer A + thử Layer B)
+
+Trong lúc build, phát hiện plugin frame-processor bên thứ ba **`@systemic-games/vision-camera-rgb-averages@1.3.1` KHÔNG biên dịch được** với RN 0.82 `newArchEnabled=true` (native module thiếu `install(Promise)` của TurboModule spec — thư viện ra đời trước new architecture). VisionCamera 4.7.3 tự nó biên dịch native OK.
+
+**Thay đổi đã chốt (thay phần "plugin có sẵn" trong Lớp B bên dưới):**
+- **GỠ** dependency `@systemic-games/vision-camera-rgb-averages`.
+- **TỰ VIẾT** một frame-processor plugin native dùng API chính thức của VisionCamera 4.7.3: subclass `com.mrousavy.camera.frameprocessors.FrameProcessorPlugin`, override `callback(Frame, Map): Object`, đăng ký qua `FrameProcessorPluginRegistry.addFrameProcessorPlugin("redAverage", initializer)` tại startup (trong `MainApplication.onCreate`).
+- **Tín hiệu = trung bình mặt phẳng LUMA (Y)** của `frame.getImage().getPlanes()[0]` (YUV_420_888), lấy mẫu thưa (mỗi ~16–32 px) cho hot-path nhanh. Dưới ngón tay + đèn flash, độ sáng Y dao động theo mạch — proxy PPG chuẩn, rẻ hơn decode RGB. `ppgAnalyzer.analyze()` (Lớp A) chỉ cần chuỗi giá trị sáng 0–255; nguồn Y hay red đều hợp lệ; quality gate 200/253 vẫn áp dụng.
+- Phía JS: `VisionCameraProxy.initFrameProcessorPlugin('redAverage', {})` rồi `plugin.call(frame)` trong `useFrameProcessor`; đẩy về JS bằng `Worklets.createRunOnJS` (worklets-core, KHÔNG reanimated).
+- **Giữ nguyên** (đã đúng + new-arch OK): `react-native-worklets-core`, babel plugin, Android torch native module, `torch.ts`, và override NDK trong `android/build.gradle` (ép `ndkVersion=27.1.12297006` cho mọi native module).
+
+Các phần khác của spec (Lớp A thuật toán, Lớp C UI + xoá giả lập, quality gate, testing) **không đổi**. Mục "Lớp B — plugin RGB có sẵn" bên dưới được thay bằng plugin tự viết như trên.
+
+> Ghi chú thuật toán (Lớp A đã triển khai): dùng **detrend + quét tần số DFT trực tiếp** trong dải 0.65–4Hz (thuần JS, không cần Butterworth+fft.js) — đơn giản hơn, không dependency, test đầy đủ. (Đã duyệt ở bước viết plan.)
+
 ## Bối cảnh & vấn đề
 
 `HeartMeasurementScreen` hiện hiển thị camera + đèn flash nhưng **không xử lý frame**; BPM sinh từ `Math.random()` (68–90) + sóng sin giả + nhiễu (dòng ~107, 194–209). Spec 1 đã làm đường lưu: màn kết quả POST BPM lên `/health/heart-rate`, cộng vào DailyAggregate, hiện Home/Calendar, có màn lịch sử. Spec 2 thay nguồn BPM giả bằng **PPG thật**: đặt ngón tay che camera sau + đèn flash → đọc trung bình kênh đỏ mỗi frame → xử lý tín hiệu → BPM thật.
