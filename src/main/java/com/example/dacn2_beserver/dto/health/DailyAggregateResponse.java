@@ -33,6 +33,7 @@ public class DailyAggregateResponse {
     private Integer remMinutes;
     private Integer lightMinutes;
     private Integer awakeMinutes;
+    private Integer sleepScore;
 
     private List<String> highlights;
     private String summary;

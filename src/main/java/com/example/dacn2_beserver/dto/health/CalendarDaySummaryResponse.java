@@ -27,6 +27,7 @@ public class CalendarDaySummaryResponse {
     private int remMinutes;
     private int lightMinutes;
     private int awakeMinutes;
+    private int sleepScore;
 
     private int avgHeartRate;
     private int maxHeartRate;
