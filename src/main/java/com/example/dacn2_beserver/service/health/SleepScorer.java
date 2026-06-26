@@ -26,7 +26,7 @@ public class SleepScorer {
             score = (int) Math.round((double) total / BAND_LOW * 100.0);
         } else {
             // decay from 100 at BAND_HIGH to 50 at OVER_FLOOR_MIN, then floor 40
-            if (total > OVER_FLOOR_MIN) {
+            if (total > OVER_FLOOR_MIN) { // strict >: at exactly 660 the decay formula already yields 50; >= would wrongly floor it to 40
                 score = HARD_FLOOR;
             } else {
                 double t = (double) (total - BAND_HIGH) / (OVER_FLOOR_MIN - BAND_HIGH);
