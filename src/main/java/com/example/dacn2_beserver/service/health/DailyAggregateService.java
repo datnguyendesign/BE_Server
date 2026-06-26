@@ -278,7 +278,7 @@ public class DailyAggregateService {
     private void applySleepHighlights(User user, DailyAggregate agg) {
         int sleep = nvl(agg.getSleepMinutes());
 
-        // MVP: chưa có sleep goal trong UserGoals => dùng default 7h
+        // MVP: chưa có sleep goal trong UserGoals => dùng default 8h
         int goalMin = DEFAULT_SLEEP_GOAL_MIN;
 
         List<String> highlights = safeCopy(agg.getHighlights());
