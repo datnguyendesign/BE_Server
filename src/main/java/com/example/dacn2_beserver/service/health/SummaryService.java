@@ -39,6 +39,7 @@ public class SummaryService {
                 .remMinutes(nvl(agg.getRemMinutes()))
                 .lightMinutes(nvl(agg.getLightMinutes()))
                 .awakeMinutes(nvl(agg.getAwakeMinutes()))
+                .sleepScore(nvl(agg.getSleepScore()))
                 .caloriesIn(nvl(agg.getCaloriesIn()))
                 .caloriesOut(nvl(agg.getCaloriesOut()))
                 .avgHeartRate(nvl(agg.getAvgHeartRate()))
