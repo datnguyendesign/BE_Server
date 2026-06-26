@@ -41,6 +41,16 @@ public class NutritionAnalyzeResponse {
 
         private CandidateStatus status; // KNOWN / UNKNOWN
         private FoodItemSnapshot foodItem; // nullable if UNKNOWN
+
+        // Unified display fields (from catalog or Ollama)
+        private String name;
+        private Integer calories;
+        private Integer protein;
+        private Integer carbs;
+        private Integer fat;
+        private String serving;
+        private String aiInsight;       // = Ollama disclaimer when present
+        private List<String> ingredients;
     }
 
     @Getter
