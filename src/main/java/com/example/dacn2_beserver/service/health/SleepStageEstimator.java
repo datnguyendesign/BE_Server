@@ -18,7 +18,6 @@ public class SleepStageEstimator {
         int rem = (int) Math.round(total * 0.22);
         int awake = (int) Math.round(total * 0.05);
         int light = total - deep - rem - awake;
-        if (light < 0) light = 0;
         return new Stages(deep, rem, light, awake);
     }
 }
