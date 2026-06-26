@@ -37,12 +37,13 @@ public class DailyAggregateService {
     // ===== Defaults (MVP) =====
     private static final String DEFAULT_TZ = "UTC";
     private static final int DEFAULT_WATER_GOAL_ML = 2000;
-    private static final int DEFAULT_SLEEP_GOAL_MIN = 420; // 7h
+    private static final int DEFAULT_SLEEP_GOAL_MIN = 480; // 8h
     private static final int DEFAULT_CALORIES_IN_GOAL = 2000;
     private static final int DEFAULT_CALORIES_OUT_GOAL = 500;
     private final DailyAggregateRepository dailyAggregateRepository;
     private final UserRepository userRepository;
     private final HealthEventRawRepository healthEventRawRepository;
+    private final SleepScorer sleepScorer;
 
 
     public DailyAggregate addHeartRate(String userId, Instant measuredAt, int bpm) {
@@ -137,18 +138,41 @@ public class DailyAggregateService {
             int lightMinutes,
             int awakeMinutes
     ) {
+        return addSleep(userId, sleepEndAt, totalMinutes, deepMinutes, remMinutes,
+                lightMinutes, awakeMinutes, false);
+    }
+
+    public DailyAggregate addSleep(
+            String userId,
+            Instant sleepEndAt,
+            int totalMinutes,
+            int deepMinutes,
+            int remMinutes,
+            int lightMinutes,
+            int awakeMinutes,
+            boolean replace
+    ) {
         User user = requireUser(userId);
         ZoneId zoneId = userZone(user);
 
         LocalDate date = LocalDateTime.ofInstant(sleepEndAt, zoneId).toLocalDate();
         DailyAggregate agg = findOrCreate(userId, date);
 
-        // MVP: cộng dồn để hỗ trợ nap hoặc nhiều session
-        agg.setSleepMinutes(nvl(agg.getSleepMinutes()) + clamp0(totalMinutes));
-        agg.setDeepMinutes(nvl(agg.getDeepMinutes()) + clamp0(deepMinutes));
-        agg.setRemMinutes(nvl(agg.getRemMinutes()) + clamp0(remMinutes));
-        agg.setLightMinutes(nvl(agg.getLightMinutes()) + clamp0(lightMinutes));
-        agg.setAwakeMinutes(nvl(agg.getAwakeMinutes()) + clamp0(awakeMinutes));
+        if (replace) {
+            agg.setSleepMinutes(clamp0(totalMinutes));
+            agg.setDeepMinutes(clamp0(deepMinutes));
+            agg.setRemMinutes(clamp0(remMinutes));
+            agg.setLightMinutes(clamp0(lightMinutes));
+            agg.setAwakeMinutes(clamp0(awakeMinutes));
+        } else {
+            agg.setSleepMinutes(nvl(agg.getSleepMinutes()) + clamp0(totalMinutes));
+            agg.setDeepMinutes(nvl(agg.getDeepMinutes()) + clamp0(deepMinutes));
+            agg.setRemMinutes(nvl(agg.getRemMinutes()) + clamp0(remMinutes));
+            agg.setLightMinutes(nvl(agg.getLightMinutes()) + clamp0(lightMinutes));
+            agg.setAwakeMinutes(nvl(agg.getAwakeMinutes()) + clamp0(awakeMinutes));
+        }
+
+        agg.setSleepScore(sleepScorer.score(nvl(agg.getSleepMinutes()), DEFAULT_SLEEP_GOAL_MIN).score());
 
         touch(agg);
 
@@ -260,11 +284,14 @@ public class DailyAggregateService {
         List<String> highlights = safeCopy(agg.getHighlights());
         highlights.removeIf(s -> s != null && s.startsWith("Sleep:"));
 
-        if (sleep >= goalMin) {
-            highlights.add("Sleep: Reached 7h+ ✅");
+        if (sleep >= goalMin) { // 8h
+            highlights.add("Sleep: Reached 8h+ ✅");
             setOrBlendSummary(agg, "Giấc ngủ hôm nay khá tốt. Tiếp tục duy trì nhé!");
+        } else if (sleep >= 420) { // 7h
+            highlights.add("Sleep: Slightly low (under 8h)");
+            setOrBlendSummary(agg, "Bạn ngủ hơi ít. Nếu có thể, hãy cố gắng ngủ thêm để hồi phục tốt hơn.");
         } else if (sleep >= 360) { // 6h
-            highlights.add("Sleep: Slightly low (under 7h)");
+            highlights.add("Sleep: Low (under 7h)");
             setOrBlendSummary(agg, "Bạn ngủ hơi ít. Nếu có thể, hãy cố gắng ngủ thêm để hồi phục tốt hơn.");
         } else {
             highlights.add("Sleep: Too low (under 6h) ⚠️");
